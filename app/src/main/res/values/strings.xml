@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">My Diary</string>
+    <string name="first_time">Let\'s Get Started</string>
+    <string name="title_activity_entry">EntryActivity</string>
+    <string name="title_activity_add">AddActivity</string>
+</resources>
