@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +28,20 @@ public class EntryActivity extends AppCompatActivity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_entry);
+
+        updateUI();
+        addEntryBtn = (ImageButton) findViewById(R.id.addNewEntry);
+        addEntryBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+               Intent i = new Intent(EntryActivity.this, AddActivity.class);
+               startActivity(i);
+            }
+        });
+    }
+
+
+    private void updateUI(){
         entryData = new ArrayList<Entry>();
         for(int i = 0; i < 100; i++) {
             if (i % 2 == 0) {
@@ -40,15 +55,6 @@ public class EntryActivity extends AppCompatActivity {
         userEntries.setLayoutManager(new LinearLayoutManager(this));
         arrayAdapter = new EntryAdapter(entryData);
         userEntries.setAdapter(arrayAdapter);
-
-        addEntryBtn = (ImageButton) findViewById(R.id.addNewEntry);
-        addEntryBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-               Intent i = new Intent(EntryActivity.this, AddActivity.class);
-               startActivity(i);
-            }
-        });
     }
 
 
@@ -64,18 +70,20 @@ public class EntryActivity extends AppCompatActivity {
             this.cameraIcon = (ImageView) itemView.findViewById(R.id.camera_icon);
             this.bookIcon = (ImageView) itemView.findViewById(R.id.book_icon);
             itemView.setOnClickListener(this);
+
         }
 
         public void bindValues(Entry val){
-            this.selectedEntry = val;
+            selectedEntry = val;
+            Log.d("MyDiary", "in the bind values function: " + String.valueOf(selectedEntry));
             entryTitle.setText(val.getTitle());
             if(val.isHasPhotos() == false){
                 cameraIcon.setVisibility(View.INVISIBLE);
             }
-
         }
         @Override
         public void onClick(View v){
+            Log.d("MyDiary", "in the onclick function: " + String.valueOf(selectedEntry));
             Intent i = new Intent(EntryActivity.this, AddActivity.class);
             i.putExtra("entry", selectedEntry);
             startActivity(i);
