@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<android.support.v4.widget.DrawerLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer"
+    tools:context="com.shariq.torres.mydiary.AddActivity">
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context="com.shariq.torres.mydiary.AddActivity">
+    >
 
     <ImageView
         android:layout_width="wrap_content"
@@ -77,7 +84,7 @@
     <ImageButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/imageButton4"
+        android:id="@+id/menuBtn"
         android:layout_alignParentTop="true"
         android:layout_alignParentRight="true"
         android:background="@drawable/menu_btn"
@@ -86,3 +93,6 @@
         android:layout_marginTop="10dp"/>
 
 </RelativeLayout>
+
+    <include layout="@layout/app_settings_menu" />
+</android.support.v4.widget.DrawerLayout>
