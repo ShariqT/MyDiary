@@ -2,6 +2,7 @@ package com.shariq.torres.mydiary;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -23,6 +24,8 @@ public class EntryActivity extends AppCompatActivity {
     ArrayList<Entry> entryData;
     EntryAdapter arrayAdapter;
     ImageButton addEntryBtn;
+    ApiThread apiThread;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -40,21 +43,44 @@ public class EntryActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onDestroy(){
+        super.onDestroy();
+        apiThread.quit();
+        Log.i("EntryActivity", "Stopped the background thread!");
+    }
+
+    @Override
+    protected  void onStop(){
+        super.onStop();
+        apiThread.quit();
+        Log.i("EntryActivity", "Stopped the background thread!");
+
+    }
 
     private void updateUI(){
-        entryData = new ArrayList<Entry>();
-        for(int i = 0; i < 100; i++) {
-            if (i % 2 == 0) {
-                entryData.add(new Entry("Even stuff", "This is a even title", true));
-            } else {
-                entryData.add(new Entry("Odd stuff", "This is a odd title", false));
-            }
+        Handler responseHandler = new Handler();
+        apiThread = new ApiThread(responseHandler);
+        apiThread.start();
+        apiThread.getLooper();
+        Log.d("EntryActivity", "Started the background thread!");
 
-        }
-        userEntries = (RecyclerView) findViewById(R.id.entryList);
-        userEntries.setLayoutManager(new LinearLayoutManager(this));
-        arrayAdapter = new EntryAdapter(entryData);
-        userEntries.setAdapter(arrayAdapter);
+
+        apiThread.setOnCompleteListener(new ApiThread.ApiThreadListener() {
+            @Override
+            public void onComplete(ArrayList<Entry> entryData) {
+                userEntries = (RecyclerView) findViewById(R.id.entryList);
+                userEntries.setLayoutManager(new LinearLayoutManager(getBaseContext()));
+                arrayAdapter = new EntryAdapter(entryData);
+                userEntries.setAdapter(arrayAdapter);
+            }
+        });
+
+        apiThread.queueTask("get entries");
+
+
+
+
     }
 
 
