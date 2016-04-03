@@ -21,23 +21,30 @@ import java.util.ArrayList;
 
 public class EntryActivity extends AppCompatActivity {
     RecyclerView userEntries;
-    ArrayList<Entry> entryData;
+    int nextEntryId;
     EntryAdapter arrayAdapter;
     ImageButton addEntryBtn;
     ApiThread apiThread;
+    ArrayList<Entry> data;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_entry);
+        userEntries = (RecyclerView) findViewById(R.id.entryList);
 
-        updateUI();
+        //updateUI();
         addEntryBtn = (ImageButton) findViewById(R.id.addNewEntry);
         addEntryBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Entry newEntry = new Entry("", "", false);
+                newEntry.setId(nextEntryId);
+
                Intent i = new Intent(EntryActivity.this, AddActivity.class);
+               i.putExtra("entry", newEntry);
+                i.putExtra("isNew", true);
                startActivity(i);
             }
         });
@@ -54,13 +61,47 @@ public class EntryActivity extends AppCompatActivity {
     protected  void onStop(){
         super.onStop();
         apiThread.quit();
+        getIntent().putParcelableArrayListExtra("entries", data);
         Log.i("EntryActivity", "Stopped the background thread!");
 
     }
 
+
+    @Override
+    protected  void onStart(){
+        Log.d("EntryActivity", "in the onStart function");
+        super.onStart();
+        updateUI();
+        //arrayAdapter.notifyDataSetChanged();
+    }
+
+    @Override
+    protected  void onResume(){
+        super.onResume();
+        if(getIntent().getParcelableArrayListExtra("entries") != null){
+            data = getIntent().getParcelableArrayListExtra("entries");
+            arrayAdapter = new EntryAdapter(data);
+            userEntries.setAdapter(arrayAdapter);
+            //have to account for if you are making the first entry
+            if(data.size() > 0){
+                nextEntryId = data.get(data.size() - 1).getId();
+                Log.d("API", "The entry._id for the last item returned in the entryData array is " + String.valueOf(nextEntryId));
+            }else{
+                nextEntryId = 0;
+            }
+            nextEntryId = nextEntryId + 1;
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState){
+        super.onSaveInstanceState(savedInstanceState);
+        savedInstanceState.putParcelableArrayList("entries", data);
+    }
+
     private void updateUI(){
         Handler responseHandler = new Handler();
-        apiThread = new ApiThread(responseHandler);
+        apiThread = new ApiThread(responseHandler, getApplicationContext());
         apiThread.start();
         apiThread.getLooper();
         Log.d("EntryActivity", "Started the background thread!");
@@ -68,15 +109,35 @@ public class EntryActivity extends AppCompatActivity {
 
         apiThread.setOnCompleteListener(new ApiThread.ApiThreadListener() {
             @Override
-            public void onComplete(ArrayList<Entry> entryData) {
-                userEntries = (RecyclerView) findViewById(R.id.entryList);
+            public void onCompleteArray(ArrayList<Entry> entryData) {
+                //userEntries = (RecyclerView) findViewById(R.id.entryList);
                 userEntries.setLayoutManager(new LinearLayoutManager(getBaseContext()));
+                Log.d("API", "On complete returned " + String.valueOf(entryData.size()) + " entries");
+                data = entryData;
                 arrayAdapter = new EntryAdapter(entryData);
                 userEntries.setAdapter(arrayAdapter);
+                //have to account for if you are making the first entry
+                if(entryData.size() > 0){
+                    nextEntryId = entryData.get(entryData.size() - 1).getId();
+                    Log.d("API", "The entry._id for the last item returned in the entryData array is " + String.valueOf(nextEntryId));
+                }else{
+                    nextEntryId = 0;
+                }
+                nextEntryId = nextEntryId + 1;
+            }
+
+            @Override
+            public void onCompleteEntry(Entry e){
+                //stub
+            }
+
+            @Override
+            public void onCompleteCode(long e){
+                //stub
             }
         });
 
-        apiThread.queueTask("get entries");
+        apiThread.getEntryList();
 
 
 
@@ -112,6 +173,7 @@ public class EntryActivity extends AppCompatActivity {
             Log.d("MyDiary", "in the onclick function: " + String.valueOf(selectedEntry));
             Intent i = new Intent(EntryActivity.this, AddActivity.class);
             i.putExtra("entry", selectedEntry);
+            i.putExtra("isNew", false);
             startActivity(i);
         }
     }
