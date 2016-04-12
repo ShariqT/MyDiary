@@ -46,12 +46,16 @@ public class Entry implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags){
         String photolistString = "";
-        for(int i = 0; i < this.photoList.size(); i++){
-            if(i == this.photoList.size() - 1){
-                photolistString += this.photoList.get(i);
-            }else{
-                photolistString += this.photoList.get(i) + ",";
+        if(this.photoList.size() > 0) {
+            for (int i = 0; i < this.photoList.size(); i++) {
+                if (i == this.photoList.size() - 1) {
+                    photolistString += this.photoList.get(i);
+                } else {
+                    photolistString += this.photoList.get(i) + ",";
+                }
             }
+        }else{
+            photolistString = ",";
         }
         dest.writeStringArray(new String[]{String.valueOf(this.hasPhotos), this.text, this.title, String.valueOf(this.entryDate.getTime()), photolistString, String.valueOf(this.id)});
 

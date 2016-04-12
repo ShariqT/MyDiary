@@ -19,7 +19,7 @@ import java.util.ArrayList;
  */
 public class ApiThread extends HandlerThread {
 
-    private Handler requestHandler;
+    private static Handler requestHandler;
     private Handler responseHandler;
     private ApiThreadListener onCompleteListener;
     private final int GET_ENTRIES = 0;
@@ -81,8 +81,12 @@ public class ApiThread extends HandlerThread {
         requestHandler.obtainMessage(GET_ENTRIES).sendToTarget();
     }
 
-    public void getEntryPhotos(int entry_id){
-        requestHandler.obtainMessage(GET_PHOTOS, entry_id, 0).sendToTarget();
+    public void getEntryPhotos(Entry entry){
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("entry", entry);
+        Message msg = requestHandler.obtainMessage(GET_PHOTOS);
+        msg.setData(bundle);
+        msg.sendToTarget();
     }
 
     public void createEntry(Entry entryToAdd){
@@ -125,15 +129,22 @@ public class ApiThread extends HandlerThread {
         if(this.db == null){
             this.db = new DBAccess(this.context).getWritableDatabase();
         }
-        ContentValues values = setUpEntryForDB(entry);
-        long t = this.db.insert("entries", null, values);
-        Log.d("API Diary", "the new id for the insert is " + String.valueOf(t));
-        if(entry.getPhotoList().size() > 1) {
-            for (String src : entry.getPhotoList()) {
-                ContentValues pvalues = setUpPhotosForDB(entry.getId(), src);
-                this.db.insert("photos", null, pvalues);
+        try{
+            ContentValues values = setUpEntryForDB(entry);
+            long t = this.db.insert("entries", null, values);
+            Log.d("API Diary", "the list of photos for the new entry is " + entry.getPhotoList().toString());
+            if(entry.getPhotoList().size() > 1) {
+                for (String src : entry.getPhotoList()) {
+                    ContentValues pvalues = setUpPhotosForDB(entry.getId(), src);
+                    this.db.insert("photos", null, pvalues);
+                }
             }
+        }finally{
+            //this.db.close();
+            //this.db = null;
         }
+
+
         return 1;
     }
 
@@ -159,17 +170,25 @@ public class ApiThread extends HandlerThread {
         if(this.db == null){
             this.db = new DBAccess(this.context).getWritableDatabase();
         }
-        ContentValues values = setUpEntryForDB(entry);
-        Log.d("API Diary", "the item getting updated as an id of " + String.valueOf(entry.getId()));
-        int t = this.db.update("entries", values, "_id = ?", new String[]{String.valueOf(entry.getId())});
-        Log.d("API Diary", "for update, there was " + String.valueOf(t) + " rows affected");
-        if(entry.getPhotoList().size() > 1) {
-            this.db.delete("photos", "post_id = ?", new String[]{String.valueOf(entry.getId())});
-            for (String src : entry.getPhotoList()) {
-                ContentValues pvalues = setUpPhotosForDB(entry.getId(), src);
-                this.db.insert("photos", null, pvalues);
+
+        try{
+            ContentValues values = setUpEntryForDB(entry);
+            Log.d("API Diary", "the item getting updated as an id of " + String.valueOf(entry.getId()));
+            int t = this.db.update("entries", values, "_id = ?", new String[]{String.valueOf(entry.getId())});
+            Log.d("API Diary", "for update, there was " + String.valueOf(t) + " rows affected");
+            Log.d("API Diary", "the photolist size is " + String.valueOf(entry.getPhotoList().size()));
+            if(entry.getPhotoList().size() > 1) {
+                this.db.delete("photos", "post_id = ?", new String[]{String.valueOf(entry.getId())});
+                for (String src : entry.getPhotoList()) {
+                    ContentValues pvalues = setUpPhotosForDB(entry.getId(), src);
+                    this.db.insert("photos", null, pvalues);
+                }
             }
+        }finally {
+           // this.db.close();
+            //this.db = null;
         }
+
         return 1;
     }
 
@@ -188,6 +207,8 @@ public class ApiThread extends HandlerThread {
             }
         }finally{
             cursor.close();
+            this.db.close();
+            //this.db = null;
         }
 
        //this.db.close();
@@ -209,10 +230,14 @@ public class ApiThread extends HandlerThread {
             cursor.moveToFirst();
             while (!cursor.isAfterLast()) {
                 photolist.add(cursor.getString(cursor.getColumnIndex("filename")));
+                cursor.moveToNext();
             }
-            entryToModify.setPhotoList(photolist);
+
         }finally {
             cursor.close();
+            entryToModify.setPhotoList(photolist);
+            this.db.close();
+            //this.db = null;
         }
 
         //this.db.close();

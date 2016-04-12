@@ -90,6 +90,7 @@ public class EntryActivity extends AppCompatActivity {
                 nextEntryId = 0;
             }
             nextEntryId = nextEntryId + 1;
+            //updateUI();
         }
     }
 

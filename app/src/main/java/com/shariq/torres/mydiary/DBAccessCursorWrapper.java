@@ -25,7 +25,7 @@ public class DBAccessCursorWrapper extends CursorWrapper {
         }else{
             hasPhotos = true;
         }
-
+        
         Entry newEntry = new Entry(title, text, hasPhotos);
         newEntry.setId(id);
         Log.d("API", "This is id of the entry that was created: " + String.valueOf(newEntry.getId()));
