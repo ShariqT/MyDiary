@@ -17,7 +17,11 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import org.w3c.dom.Text;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class EntryActivity extends AppCompatActivity {
     RecyclerView userEntries;
@@ -53,6 +57,7 @@ public class EntryActivity extends AppCompatActivity {
     @Override
     protected void onDestroy(){
         super.onDestroy();
+        apiThread.getDb().close();
         apiThread.quit();
         Log.i("EntryActivity", "Stopped the background thread!");
     }
@@ -60,7 +65,8 @@ public class EntryActivity extends AppCompatActivity {
     @Override
     protected  void onStop(){
         super.onStop();
-        apiThread.quit();
+        //apiThread.getDb().close();
+        //apiThread.quit();
         getIntent().putParcelableArrayListExtra("entries", data);
         Log.i("EntryActivity", "Stopped the background thread!");
 
@@ -151,12 +157,14 @@ public class EntryActivity extends AppCompatActivity {
         public ImageView cameraIcon;
         public ImageView bookIcon;
         private Entry selectedEntry;
+        private TextView entryDate;
 
         public EntryHolder(View itemView){
             super(itemView);
             this.entryTitle = (TextView) itemView.findViewById(R.id.entryTitle);
             this.cameraIcon = (ImageView) itemView.findViewById(R.id.camera_icon);
             this.bookIcon = (ImageView) itemView.findViewById(R.id.book_icon);
+            this.entryDate = (TextView) itemView.findViewById(R.id.entryDate);
             itemView.setOnClickListener(this);
 
         }
@@ -165,9 +173,12 @@ public class EntryActivity extends AppCompatActivity {
             selectedEntry = val;
             Log.d("MyDiary", "in the bind values function: " + String.valueOf(selectedEntry));
             entryTitle.setText(val.getTitle());
-            if(val.isHasPhotos() == false){
+            if(!val.isHasPhotos()){
                 cameraIcon.setVisibility(View.INVISIBLE);
             }
+            SimpleDateFormat ft = new SimpleDateFormat("MM.dd.yyyy");
+            entryDate.setText(ft.format(val.getEntryDate()));
+
         }
         @Override
         public void onClick(View v){

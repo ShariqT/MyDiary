@@ -26,6 +26,7 @@ public class ApiThread extends HandlerThread {
     private final int GET_PHOTOS = 1;
     private final int CREATE_ENTRY = 2;
     private final int SAVE_ENTRY = 3;
+    private final int DELETE_PHOTO = 4;
     private Context context;
     private SQLiteDatabase db;
     public ApiThread(Handler responseHandler, Context context){
@@ -33,6 +34,10 @@ public class ApiThread extends HandlerThread {
         this.responseHandler = responseHandler;
         this.context = context;
 
+    }
+
+    public SQLiteDatabase getDb(){
+        return this.db;
     }
 
     @Override
@@ -60,6 +65,10 @@ public class ApiThread extends HandlerThread {
                         myMsg = msg.getData();
                         entryToSave = myMsg.getParcelable("entry");
                         saveEntryToDB(entryToSave);
+                        break;
+                    case DELETE_PHOTO:
+                        myMsg = msg.getData();
+                        deleteSinglePhoto(myMsg.getInt("id"), myMsg.getString("src"));
                         break;
                 }
             }
@@ -105,6 +114,15 @@ public class ApiThread extends HandlerThread {
         msg.sendToTarget();
     }
 
+    public void deletePhoto(int id, String src){
+        Bundle bundle = new Bundle();
+        bundle.putInt("id", id);
+        bundle.putString("src", src);
+        Message msg = requestHandler.obtainMessage(DELETE_PHOTO);
+        msg.setData(bundle);
+        msg.sendToTarget();
+    }
+
 
 
     private DBAccessCursorWrapper buildEntryQuery(){
@@ -133,7 +151,7 @@ public class ApiThread extends HandlerThread {
             ContentValues values = setUpEntryForDB(entry);
             long t = this.db.insert("entries", null, values);
             Log.d("API Diary", "the list of photos for the new entry is " + entry.getPhotoList().toString());
-            if(entry.getPhotoList().size() > 1) {
+            if(entry.getPhotoList().size() > 0) {
                 for (String src : entry.getPhotoList()) {
                     ContentValues pvalues = setUpPhotosForDB(entry.getId(), src);
                     this.db.insert("photos", null, pvalues);
@@ -177,7 +195,7 @@ public class ApiThread extends HandlerThread {
             int t = this.db.update("entries", values, "_id = ?", new String[]{String.valueOf(entry.getId())});
             Log.d("API Diary", "for update, there was " + String.valueOf(t) + " rows affected");
             Log.d("API Diary", "the photolist size is " + String.valueOf(entry.getPhotoList().size()));
-            if(entry.getPhotoList().size() > 1) {
+            if(entry.getPhotoList().size() > 0) {
                 this.db.delete("photos", "post_id = ?", new String[]{String.valueOf(entry.getId())});
                 for (String src : entry.getPhotoList()) {
                     ContentValues pvalues = setUpPhotosForDB(entry.getId(), src);
@@ -193,6 +211,15 @@ public class ApiThread extends HandlerThread {
     }
 
 
+    protected void deleteSinglePhoto(int id, String src){
+        this.db.delete("photos", "post_id = ? and filename = ?", new String[]{String.valueOf(id), src});
+        this.responseHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                onCompleteListener.onCompleteCode(-1000);
+            }
+        });
+    }
 
 
     protected void getListOfEntries(){
@@ -207,7 +234,7 @@ public class ApiThread extends HandlerThread {
             }
         }finally{
             cursor.close();
-            this.db.close();
+            //this.db.close();
             //this.db = null;
         }
 
@@ -236,7 +263,7 @@ public class ApiThread extends HandlerThread {
         }finally {
             cursor.close();
             entryToModify.setPhotoList(photolist);
-            this.db.close();
+            //this.db.close();
             //this.db = null;
         }
 

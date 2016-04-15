@@ -8,6 +8,9 @@ import android.os.Bundle;
 
 import android.os.Handler;
 import android.os.Parcelable;
+import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -19,11 +22,12 @@ import android.widget.EditText;
 
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 
-public class AddActivity extends BaseActivity{
+public class AddActivity extends BaseActivity implements DeletePhotoAlert.OnFragmentInteractionListener{
 
     Entry selectedEntry;
     EditText title;
@@ -34,7 +38,7 @@ public class AddActivity extends BaseActivity{
     ImageButton cameraBtn;
     RecyclerView gridImages;
     EntryImageAdapter adapter;
-    ArrayList<String> photolist;
+
 
     public static int REQUEST_PHOTOS = 1;
     boolean isInitConfig = true;
@@ -97,6 +101,7 @@ public class AddActivity extends BaseActivity{
     @Override
     protected void onDestroy(){
         super.onDestroy();
+        //apiThread.getDb().close();
         apiThread.quit();
     }
 
@@ -139,16 +144,25 @@ public class AddActivity extends BaseActivity{
 
 
     protected void addImageThumbnail(Uri data){
-       //selectedEntry.getPhotoList().add(data.toString());
-        photolist.add(data.toString());
-        if(photolist.size() == 1){
-            adapter = new EntryImageAdapter(photolist);
+       selectedEntry.getPhotoList().add(data.toString());
+        //photolist.add(data.toString());
+        if(selectedEntry.getPhotoList().size() == 1){
+            adapter = new EntryImageAdapter(selectedEntry.getPhotoList());
             gridImages.setAdapter(adapter);
             gridImages.setLayoutManager(new GridLayoutManager(this, 3));
+            gridImages.setVisibility(View.VISIBLE);
+            gridImages.setMinimumHeight(100);
         }else {
-            //adapter.data.add(data.toString());
+            adapter.data = selectedEntry.getPhotoList();
             //adapter.notifyItemInserted(adapter.data.size() - 1);
             adapter.notifyDataSetChanged();
+            double rows = Math.ceil( (double) selectedEntry.getPhotoList().size() / 3.0);
+            if(rows == 0.0){
+                gridImages.setMinimumHeight(250);
+            }else{
+                gridImages.setMinimumHeight( (int)rows * 250);
+            }
+
         }
 
     }
@@ -167,18 +181,31 @@ public class AddActivity extends BaseActivity{
 
             @Override
             public void onCompleteCode(long returnCode) {
-                Toast.makeText(AddActivity.this, "Saved!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(AddActivity.this, "Complete!", Toast.LENGTH_SHORT).show();
+                if(returnCode == -1000){
+                    apiThread.getEntryPhotos(selectedEntry);
+                }
             }
 
             @Override
             public void onCompleteEntry(Entry entry) {
                 //Toast.makeText(AddActivity.this, "Saved!", Toast.LENGTH_SHORT).show();
-                photolist = entry.getPhotoList();
+                //photolist = entry.getPhotoList();
                 selectedEntry.setPhotoList( entry.getPhotoList());
-                if(selectedEntry.getPhotoList().size() > 1) {
+                if(selectedEntry.getPhotoList().size() > 0) {
                     adapter = new EntryImageAdapter(selectedEntry.getPhotoList());
                     gridImages.setAdapter(adapter);
                     gridImages.setLayoutManager(new GridLayoutManager(AddActivity.this, 3));
+                    double rows = Math.ceil( (double)selectedEntry.getPhotoList().size() / 3.0);
+                    if(rows == 0.0){
+                        gridImages.setMinimumHeight(250);
+                    }else {
+                        gridImages.setMinimumHeight((int) rows * 250);
+                    }
+                    gridImages.setVisibility(View.VISIBLE);
+                }else{
+                    gridImages.setVisibility(View.INVISIBLE);
+                    gridImages.setMinimumHeight(10);
                 }
             }
         });
@@ -189,14 +216,21 @@ public class AddActivity extends BaseActivity{
         }
     }
 
+    public void onFragmentInteraction(String src){
+        apiThread.deletePhoto(selectedEntry.getId(), src);
 
-    public class EntryImageHolder extends RecyclerView.ViewHolder implements View.OnClickListener
+
+    }
+
+
+    public class EntryImageHolder extends RecyclerView.ViewHolder
     {
         public ImageView entryImg;
+        public TextView entrySrc;
         public EntryImageHolder(View itemView){
             super(itemView);
             entryImg = (ImageView) itemView.findViewById(R.id.entryImg);
-
+            entrySrc = (TextView) itemView.findViewById(R.id.entrySrc);
         }
 
         public void bindValues(String filePath){
@@ -209,14 +243,23 @@ public class AddActivity extends BaseActivity{
                 options.inJustDecodeBounds = false;
 
                 entryImg.setImageBitmap(BitmapFactory.decodeStream(AddActivity.this.getContentResolver().openInputStream(fileUri), null, options));
+                entrySrc.setText(filePath);
+
+                entryImg.setOnClickListener(new View.OnClickListener(){
+                    @Override
+                    public void onClick(View v){
+                        FragmentManager fm = getSupportFragmentManager();
+                        DialogFragment dialog = DeletePhotoAlert.newInstance( (String)entrySrc.getText());
+                        dialog.show(fm, "deletePhoto");
+
+
+
+                    }
+                });
             }catch (java.io.FileNotFoundException e){
                 Log.d("AddActivity", "file error was " + e.getMessage());
                 Toast.makeText(AddActivity.this, "Error getting file", Toast.LENGTH_SHORT).show();
             }
-        }
-
-        public void onClick(View v){
-
         }
 
 
