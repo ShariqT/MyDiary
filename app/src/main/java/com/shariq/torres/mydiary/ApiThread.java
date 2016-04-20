@@ -27,6 +27,7 @@ public class ApiThread extends HandlerThread {
     private final int CREATE_ENTRY = 2;
     private final int SAVE_ENTRY = 3;
     private final int DELETE_PHOTO = 4;
+    private final int DELETE_ENTRY = 5;
     private Context context;
     private SQLiteDatabase db;
     public ApiThread(Handler responseHandler, Context context){
@@ -69,6 +70,10 @@ public class ApiThread extends HandlerThread {
                     case DELETE_PHOTO:
                         myMsg = msg.getData();
                         deleteSinglePhoto(myMsg.getInt("id"), myMsg.getString("src"));
+                        break;
+                    case DELETE_ENTRY:
+                        myMsg = msg.getData();
+                        deleteEntryFromDB(myMsg.getInt("id"));
                         break;
                 }
             }
@@ -123,6 +128,13 @@ public class ApiThread extends HandlerThread {
         msg.sendToTarget();
     }
 
+    public void deleteEntry(int id){
+        Bundle bundle = new Bundle();
+        bundle.putInt("id", id);
+        Message msg = requestHandler.obtainMessage(DELETE_ENTRY);
+        msg.setData(bundle);
+        msg.sendToTarget();
+    }
 
 
     private DBAccessCursorWrapper buildEntryQuery(){
@@ -244,6 +256,19 @@ public class ApiThread extends HandlerThread {
             @Override
             public void run() {
                 onCompleteListener.onCompleteArray(entryData);
+            }
+        });
+    }
+
+
+    protected void deleteEntryFromDB(int idToDelete){
+        this.db.delete("entries", "_id = ?", new String[]{String.valueOf(idToDelete)});
+        this.db.delete("photos", "post_id = ?", new String[]{String.valueOf(idToDelete)});
+
+        this.responseHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                onCompleteListener.onCompleteCode(-2000);
             }
         });
     }

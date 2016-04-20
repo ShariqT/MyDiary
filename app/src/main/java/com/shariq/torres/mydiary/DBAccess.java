@@ -21,7 +21,7 @@ public class DBAccess extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db){
         db.execSQL("CREATE TABLE IF NOT EXISTS entries ('_id' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 'title' TEXT NOT NULL, 'text' TEXT NOT NULL, 'created' BIGINT NOT NULL)");
         db.execSQL("CREATE TABLE IF NOT EXISTS photos ('_id' INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, 'post_id' INTEGER NOT NULL, 'filename' TEXT NOT NULL)");
-        db.execSQL("INSERT INTO entries (text, title, created) VALUES ('SDFS', 'DSFSDF', 46000000)");
+
     }
 
     @Override

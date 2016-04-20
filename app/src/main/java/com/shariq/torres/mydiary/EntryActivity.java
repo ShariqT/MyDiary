@@ -23,7 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Locale;
 
-public class EntryActivity extends AppCompatActivity {
+public class EntryActivity extends BaseActivity {
     RecyclerView userEntries;
     int nextEntryId;
     EntryAdapter arrayAdapter;
@@ -52,6 +52,8 @@ public class EntryActivity extends AppCompatActivity {
                startActivity(i);
             }
         });
+
+        setUpSettingsMenu();
     }
 
     @Override
@@ -99,6 +101,8 @@ public class EntryActivity extends AppCompatActivity {
             //updateUI();
         }
     }
+
+
 
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState){

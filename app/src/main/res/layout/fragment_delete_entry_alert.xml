@@ -2,14 +2,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.shariq.torres.mydiary.DeletePhotoAlert">
+    tools:context="com.shariq.torres.mydiary.DeleteEntryAlert">
 
-    
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingStart="@dimen/activity_horizontal_margin"
         android:paddingEnd="@dimen/activity_horizontal_margin"
-        android:text="This will remove the selected photo from this diary entry. This action cannot be reversed." />
+        android:text="This will delete this diary entry. This action is not reversable. Any pictures associated with this entry will still be on your device." />
 
 </FrameLayout>

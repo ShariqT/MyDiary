@@ -1,8 +1,10 @@
 package com.shariq.torres.mydiary;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.AdapterView;
@@ -29,17 +31,44 @@ public class BaseActivity extends AppCompatActivity {
                 drawer.openDrawer(Gravity.RIGHT);
             }
         });
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1, Settings.menu);
+        Log.d("MyDiary", getComponentName().getClassName());
+        String[] menu_items;
+        switch(getComponentName().getClassName()){
+            case "com.shariq.torres.mydiary.AddActivity":
+                menu_items = new String[2];
+                menu_items[0] = "Delete Entry";
+                menu_items[1] = "About";
+                break;
+            default:
+                menu_items = new String[1];
+                menu_items[0] = "About";
+                break;
+
+        }
+
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,menu_items);
         ListView navList = (ListView) findViewById(R.id.listView);
         navList.setAdapter(adapter);
         navList.setOnItemClickListener(new AdapterView.OnItemClickListener(){
             public void onItemClick(AdapterView<?> parent, View view, int position, long id){
                 String message = ( (TextView) view).getText().toString();
-                Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+                switch(message){
+                    case "Delete Entry":
+                        onDeleteEntryFromSettingMenu();
+                        break;
+                    case "About":
+                        Intent i = new Intent(getApplicationContext(), AboutActivity.class);
+                        startActivity(i);
+                        break;
+                }
             }
         });
 
     }
+
+
+    protected void onDeleteEntryFromSettingMenu(){}
 
 
 

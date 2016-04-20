@@ -27,7 +27,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
-public class AddActivity extends BaseActivity implements DeletePhotoAlert.OnFragmentInteractionListener{
+public class AddActivity extends BaseActivity implements DeletePhotoAlert.OnFragmentInteractionListener, DeleteEntryAlert.OnEntryInteractionListener{
 
     Entry selectedEntry;
     EditText title;
@@ -185,6 +185,11 @@ public class AddActivity extends BaseActivity implements DeletePhotoAlert.OnFrag
                 if(returnCode == -1000){
                     apiThread.getEntryPhotos(selectedEntry);
                 }
+
+                if(returnCode == -2000){
+                    Intent i = new Intent(AddActivity.this, EntryActivity.class);
+                    startActivity(i);
+                }
             }
 
             @Override
@@ -216,10 +221,20 @@ public class AddActivity extends BaseActivity implements DeletePhotoAlert.OnFrag
         }
     }
 
+
     public void onFragmentInteraction(String src){
         apiThread.deletePhoto(selectedEntry.getId(), src);
+    }
 
+    public void onEntryDialogInteraction(int id){
+        apiThread.deleteEntry(id);
+    }
 
+    @Override
+    protected void onDeleteEntryFromSettingMenu(){
+        FragmentManager fm = getSupportFragmentManager();
+        DialogFragment dialog = DeleteEntryAlert.newInstance(selectedEntry.getId());
+        dialog.show(fm, "deleteEntry");
     }
 
 
